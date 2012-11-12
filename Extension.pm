@@ -13,6 +13,9 @@ package Bugzilla::Extension::QuickIdeas;
 use strict;
 use base qw(Bugzilla::Extension);
 
+use Bugzilla;
+use Bugzilla::Constants;
+
 use JSON;
 
 our $VERSION = '0.01';
@@ -21,6 +24,7 @@ sub page_before_template {
     my ($self, $params) = @_;
 
     if($params->{page_id} eq 'quickideas/enter.html') {
+        Bugzilla->login(LOGIN_REQUIRED);
         my $vars = $params->{vars};
         my @components = _get_component_list();
         my $selectedcomponent = 0;
