@@ -1,0 +1,31 @@
+[%#
+  # This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # Copyright (C) 2012 Jolla Ltd.
+  # Contact: Pami Ketolainen <pami.ketolainen@jollamobile.com>
+  # Contributor(s):
+  #   David Wilson
+  #%]
+<div style="display: none">
+    <li id="idea_item">
+        <a id="idea" href="page.cgi?id=quickideas/enter.html">
+        <span>Enter Ideas</span></a>
+    </li>
+</div>
+
+<style>
+    #idea {
+        background: url("extensions/QuickIdeas/web/images/idea.png")
+            no-repeat scroll center center transparent;
+    }
+</style>
+
+<script>
+   var idea = document.getElementById('idea_item');
+   var actions = YAHOO.util.Dom.getElementsByClassName('bz_common_actions')[0];
+   var list = YAHOO.util.Dom.getFirstChild(actions);
+   var item = YAHOO.util.Dom.getFirstChild(list);
+   YAHOO.util.Dom.insertBefore(idea, item);
+</script>

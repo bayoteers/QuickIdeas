@@ -1,0 +1,199 @@
+[%#
+  # This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # Copyright (C) 2012 Jolla Ltd.
+  # Contact: Pami Ketolainen <pami.ketolainen@jollamobile.com>
+  # Contributor(s):
+  #   David Wilson
+  #%]
+
+[% PROCESS 'global/field-descs.none.tmpl' %]
+
+[% USE Bugzilla %]
+
+[% IF bb_available %]
+[% javascript_urls = [ "extensions/QuickIdeas/web/js/ideas.js" ] %]
+[% ELSE %]
+[% javascript_urls = [
+        "extensions/QuickIdeas/web/js/jquery-1.8.2.min.js"
+        "extensions/QuickIdeas/web/js/jquery-ui-1.9.1.custom.min.js"
+        "extensions/QuickIdeas/web/js/jquery.jsonrpc.js",
+        "extensions/QuickIdeas/web/js/ideas.js",
+    ]
+%]
+[% END %]
+
+
+[% PROCESS global/header.html.tmpl
+    title = 'Quickly enter ideas'
+%]
+
+<script>var IDEAS_CONFIG = ([% ideas_config %]);</script>
+
+<div style="display: none"> <!-- templates -->
+    <table id="idea_template" class="idea">
+        [% IF enable_clone %]
+        <tr>
+            <th>Clone from:</th>
+            <td><input id="clone" tabindex="2"/></td>
+        </tr>
+        [% END %]
+        <tr>
+            <th>Component:</th>
+            <td>
+                <select class="idea-component" tabindex="2"></select>
+                <select name="severity" tabindex="2"></select>
+                <input class="keep" type="checkbox" checked="checked"
+                       tabindex="0"
+                       title="Preserve this field value for new ideas"/>
+            </td>
+        </tr>
+        <tr>
+            <th>Title:</th>
+            <td><input name="summary" tabindex="2"></td>
+        </tr>
+        <tr>
+            <th>Description:</th>
+            <td><textarea name="description" tabindex="2"></textarea></td>
+        </tr>
+    [% fcount = 6 %]
+    [% FOREACH field = extra_fields %]
+        [%# We only support simple input fields for now %]
+        <tr>
+            <th>[% field_descs.$field OR field FILTER ucfirst FILTER html %]:</th>
+            <td>
+                <input name="[% field %]" tabindex="2"/>
+                [% fcount = fcount + 1 %]
+                <input class="keep" type="checkbox"
+                       tabindex="0"
+                       title="Preserve this field value for new ideas"
+                       [% 'checked="checked"' IF field == 'blocks' %]/>
+            </td>
+        </tr>
+    [% END %]
+        <tr>
+            <td></td>
+            <td><span class="progress"></span></td>
+        </tr>
+    </table>
+</div>
+
+<style>
+    .idea {
+        width: 50%;
+        padding: 1em;
+        background: #efffef;
+        margin-bottom: 1em;
+    }
+
+    .idea th,
+    .idea td {
+        padding: 4px;
+    }
+
+    .idea th {
+        width: 10%;
+        text-align: right;
+        vertical-align: top;
+    }
+
+    .idea *[readonly,disabled] {
+        background: #efefef;
+    }
+
+    .idea-component {
+        width: 73%;
+    }
+
+    [name=severity] {
+        width: 25%;
+    }
+
+    #clone, [name=summary], [name=description] {
+        width: 100%;
+    }
+
+    [name=description] {
+        height: 5em;
+        resize: vertical;
+    }
+
+    .idea .progress {
+        width: 10%;
+    }
+
+    .hint {
+        background: #efefef;
+        width: 45%;
+        padding: 1em;
+        float: right;
+    }
+</style>
+
+
+
+<h2>Quickly enter ideas</h2>
+
+<div class="hint">
+    <p>
+    <strong>How this page works</strong>
+
+    <p>
+    [% terms.Bugzilla %] is slow, complicated, old software. You on the other
+    hand are a snappy upstart who doesn't like waiting around to fill in forms
+    all day. This page is the solution: enter [% terms.bugs %] as fast as you
+    can type.
+    </p>
+
+    <ol>
+        <li>
+            <p>Select a component, or keep the default if you don't know where
+            to send your idea.</p>
+        </li>
+
+        <li>
+            <p>Type a title then hit tab. The keyboard focus is already in this
+            field when the page loads.</p>
+        </li>
+
+        <li>
+            <p>Type a description then hit tab.</p>
+        </li>
+
+        [% IF extra_fields.size %]
+        <li>
+            <p>If you have any other details, fill them in, or just skip the
+            rest of the fields with tab.</p>
+        </li>
+        [% END %]
+
+        <li>
+            <p><strong>Success!</strong> After hitting tab in the last field
+            your idea is merrily saving itself in the background. See step 2,
+            it's already possible to enter your next idea. Have a jolly day.
+            &#9786;
+            </p>
+        </li>
+    </ol>
+
+    <p>Tip: use the tab key gratuitously!</p>
+
+    <p>Tip: if things are really slow, you don't have to wait for individual
+    [%+ terms.bugs %] to save, the page will take care of waiting on
+    [%+ terms.Bugzilla %] for you.</p>
+
+    <p>Tip: the checkbox besides a field means "Keep this value for further
+    ideas I'm about to enter". If you check the box, the value of that field
+    will be preserved when clearing the form for your next idea. Keyboard
+    shortcut CTRL-K allows you to quickly toggle the checkbox.</p>
+</div>
+
+<div id="ideas">
+</div>
+
+<p style="clear: both; padding-top: 2em;">
+</p>
+
+[% PROCESS global/footer.html.tmpl %]
