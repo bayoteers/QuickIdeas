@@ -9,28 +9,39 @@
   #   David Wilson
   #%]
 
+[% PROCESS global/variables.none.tmpl %]
 [% PROCESS 'global/field-descs.none.tmpl' %]
 
 [% USE Bugzilla %]
 
 [% IF bb_available %]
-[% javascript_urls = [ "extensions/QuickIdeas/web/js/ideas.js" ] %]
+    [% javascript_urls = [
+        "extensions/QuickIdeas/web/js/ideas.js",
+        "js/util.js", "js/field.js",
+    ] %]
 [% ELSE %]
-[% javascript_urls = [
+    [% javascript_urls = [
         "extensions/QuickIdeas/web/js/jquery-1.8.2.min.js"
         "extensions/QuickIdeas/web/js/jquery-ui-1.9.1.custom.min.js"
         "extensions/QuickIdeas/web/js/jquery.jsonrpc.js",
         "extensions/QuickIdeas/web/js/ideas.js",
-    ]
-%]
+        "js/util.js", "js/field.js",
+    ] %]
 [% END %]
 
+[% yui = ['autocomplete', 'calendar'] %]
 
 [% PROCESS global/header.html.tmpl
     title = 'Quickly enter ideas'
 %]
 
-<script>var IDEAS_CONFIG = ([% ideas_config %]);</script>
+<script>
+var IDEAS_CONFIG = ([% ideas_config %]);
+YAHOO.bugzilla.keyword_array = [
+    [%- FOREACH keyword = all_keywords %]
+        [%-# %]"[% keyword.name FILTER js %]"
+        [%- "," IF NOT loop.last %][% END %]];
+</script>
 
 <div style="display: none"> <!-- templates -->
     <table id="idea_template" class="idea">
@@ -41,7 +52,7 @@
         </tr>
         [% END %]
         <tr>
-            <th>Component:</th>
+            <th class="field_label required">Component:</th>
             <td>
                 <select class="idea-component" tabindex="2"></select>
                 <select name="severity" tabindex="2"></select>
@@ -51,27 +62,23 @@
             </td>
         </tr>
         <tr>
-            <th>Title:</th>
+            <th class="field_label required">Title:</th>
             <td><input name="summary" tabindex="2"></td>
         </tr>
         <tr>
-            <th>Description:</th>
+            <th class="field_label required">Description:</th>
             <td><textarea name="description" tabindex="2"></textarea></td>
         </tr>
-    [% fcount = 6 %]
-    [% FOREACH field = extra_fields %]
-        [%# We only support simple input fields for now %]
-        <tr>
-            <th>[% field_descs.$field OR field FILTER ucfirst FILTER html %]:</th>
-            <td>
-                <input name="[% field %]" tabindex="2"/>
-                [% fcount = fcount + 1 %]
-                <input class="keep" type="checkbox"
-                       tabindex="0"
-                       title="Preserve this field value for new ideas"
-                       [% 'checked="checked"' IF field == 'blocks' %]/>
-            </td>
-        </tr>
+    [%# Add mandatory custom fields %]
+    [% FOREACH field = Bugzilla.active_custom_fields %]
+        [% NEXT IF NOT field.is_mandatory OR extra_fields.grep(field.name).size %]
+        [% PROCESS field_row %]
+    [% END %]
+
+    [%# Add extra fields %]
+    [% FOREACH fname = extra_fields %]
+        [% field = bug_fields.$fname %]
+        [% PROCESS field_row %]
     [% END %]
         <tr>
             <td></td>
@@ -79,6 +86,46 @@
         </tr>
     </table>
 </div>
+
+[% BLOCK field_row %]
+<tr>
+  [% PROCESS "bug/field-label.html.tmpl" %]
+  <td>
+[% IF field.name == 'keywords' || field.name == 'cc' %]<div>[% END %]
+[% SWITCH field.type %]
+  [% CASE constants.FIELD_TYPE_SINGLE_SELECT %]
+    <select name="[% field.name FILTER html %]"
+            tabindex="2">
+            [% PROCESS select_options %]
+    </select>
+
+  [% CASE constants.FIELD_TYPE_MULTI_SELECT %]
+    <select name="[% field.name FILTER html %]"
+            tabindex="2" multiple="multiple">
+            [% PROCESS select_options %]
+    </select>
+  [% CASE %]
+    <input type="text" name="[% field.name FILTER html %]"
+             tabindex="2"/>
+[% END %]
+[% IF field.name == 'keywords' || field.name == 'cc' %]
+      <div class="[% field.name %]_autocomplete"></div>
+    </div>
+[% END %]
+    <input class="keep" type="checkbox" tabindex="0"
+            title="Preserve this field value for new ideas"
+            [% 'checked="checked"' IF field.name == 'blocked' %]/>
+
+  </td>
+</tr>
+[% END # field_row %]
+
+[% BLOCK select_options %]
+    [% FOREACH value = field.legal_values %]
+        [% SET tmp = value.name FILTER html %]
+        <option value="[% tmp %]">[% tmp %]</option>
+    [% END %]
+[% END # select_options %]
 
 <style>
     .idea {
@@ -94,7 +141,7 @@
     }
 
     .idea th {
-        width: 10%;
+        width: 15%;
         text-align: right;
         vertical-align: top;
     }
@@ -118,6 +165,9 @@
     [name=description] {
         height: 5em;
         resize: vertical;
+    }
+    .keep {
+        vertical-align: top;
     }
 
     .idea .progress {

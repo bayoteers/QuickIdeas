@@ -22,6 +22,8 @@ sub get_param_list {
         'SELECT CONCAT(P.name, \'::\', C.name) FROM components AS C '.
         'LEFT JOIN products P ON C.product_id = P.id '.
         'WHERE P.isactive = 1 ORDER BY P.name, C.name')};
+    my @legal_fields = qw(blocked dependson estimated_time deadline bug_file_loc keywords cc);
+    push @legal_fields, map {$_->name} grep($_->enter_bug, Bugzilla->active_custom_fields);
 
     return ({
             name => 'quickideas_default_component',
@@ -36,7 +38,7 @@ sub get_param_list {
         }, {
             name => 'quickideas_extra_fields',
             type => 'm',
-            choices => [qw(blocks depends_on estimated_time deadline url keywords cc)],
+            choices => \@legal_fields,
             default => [],
         }, {
             name => 'quickideas_enable_clone',

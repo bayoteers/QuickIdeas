@@ -91,6 +91,18 @@ $.widget('ideas.entryform', {
 
         $(':input', this.element).not('.keep').last().keydown(
                 $.proxy(this, '_onLastKeydown'));
+
+        // Keyword autocomlete init
+        $('[name=keywords]', this.element).each(function(index, input) {
+            var container = $(input).siblings(".keywords_autocomplete").get(0);
+            YAHOO.bugzilla.keywordAutocomplete.init(input, container);
+        });
+
+        // CC autocomplete
+        $('[name=cc]', this.element).each(function(index, input) {
+            var container = $(input).siblings(".cc_autocomplete").get(0);
+            YAHOO.bugzilla.userAutocomplete.init(input, container, true);
+        })
         this._summary.focus();
     },
 
@@ -257,14 +269,28 @@ $.widget('ideas.entryform', {
         this._progress.text('');
         this.element.find(':input').each(function() {
             var input = $(this);
+            input.css("background", '');
             var name = input.attr('name');
+            if (valid) input.focus();
+            valid = that._check_required(input) && valid;
             if (name && that['_validate_'+name] != undefined) {
-                if (valid) input.focus();
                 valid = that['_validate_'+name](input) && valid;
             }
             return true;
         });
         return valid;
+    },
+
+    _check_required: function(input)
+    {
+        var labelth = input.parents('tr').first().find('th');
+        if(labelth.hasClass('required') && ! input.val()) {
+            var field = labelth.text().trim().slice(0, -1);
+            this._progress.append(field + ' is required.<br/>');
+            input.css('background', 'pink');
+            return false;
+        }
+        return true;
     },
     _validate_summary: function(input)
     {
@@ -282,11 +308,11 @@ $.widget('ideas.entryform', {
         }
         return true;
     },
-    _validate_blocks: function(input)
+    _validate_blocked: function(input)
     {
         return this._sanitizeBlocksField(input);
     },
-    _validate_depends_on: function(input)
+    _validate_dependson: function(input)
     {
         return this._sanitizeBlocksField(input);
     },
@@ -359,7 +385,7 @@ $.widget('ideas.entryform', {
     {
         if(!(ev.keyCode == 75 && event.ctrlKey)) return;
         var element = $(ev.target);
-        var keep = element.siblings('.keep');
+        var keep = element.parents("td").first().find(".keep");
         if (keep.prop('checked')) {
             keep.prop('checked', false);
         } else {
