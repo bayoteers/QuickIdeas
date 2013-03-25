@@ -17,12 +17,12 @@ use Bugzilla::Field;
 sub get_param_list {
     my ($class) = @_;
 
-    my @legal_severities = @{get_legal_field_values('bug_severity')};
     my @legal_components = @{Bugzilla->dbh->selectcol_arrayref(
         'SELECT CONCAT(P.name, \'::\', C.name) FROM components AS C '.
         'LEFT JOIN products P ON C.product_id = P.id '.
         'WHERE P.isactive = 1 ORDER BY P.name, C.name')};
-    my @legal_fields = qw(blocked dependson estimated_time deadline bug_file_loc keywords cc);
+    my @legal_fields = qw(bug_severity rep_platform op_sys blocked dependson
+            estimated_time deadline bug_file_loc keywords cc);
     push @legal_fields, map {$_->name} grep($_->enter_bug, Bugzilla->active_custom_fields);
 
     return ({
@@ -30,11 +30,6 @@ sub get_param_list {
             type => 's',
             choices => \@legal_components,
             default => $legal_components[0],
-        }, {
-            name => 'quickideas_default_severity',
-            type => 's',
-            choices => \@legal_severities,
-            default => $legal_severities[0],
         }, {
             name => 'quickideas_extra_fields',
             type => 'm',

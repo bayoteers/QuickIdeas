@@ -57,7 +57,7 @@ $.widget('ideas.entryform', {
 
         this._render();
         this._fillComponents();
-        this._fillSeverities();
+        this._setDefaults();
 
         var that = this;
         this.element.find(':input').not('#clone').each(function() {
@@ -79,17 +79,16 @@ $.widget('ideas.entryform', {
         this._clone.keydown($.proxy(this, '_onCloneKeydown'));
 
         this._component = $('.idea-component', this.element);
-        this._severity = $('[name=severity]', this.element);
         this._summary = $('[name=summary]', this.element);
         this._description = $('[name=description]', this.element);
 
         this._progress = $('.progress', this.element);
         // To allow quick disabling.
         this._controls = $(':input', this.element);
-        $(':input', this.element).not('.keep').keydown(
+        this._controls.not('.keep').keydown(
                 $.proxy(this, '_onKeydown'));
 
-        $(':input', this.element).not('.keep').last().keydown(
+        this._controls.not('.keep').last().keydown(
                 $.proxy(this, '_onLastKeydown'));
 
         // Keyword autocomlete init
@@ -104,6 +103,13 @@ $.widget('ideas.entryform', {
             YAHOO.bugzilla.userAutocomplete.init(input, container, true);
         })
         this._summary.focus();
+    },
+
+    _setDefaults: function()
+    {
+        for (var field in IDEAS_CONFIG.defaults) {
+            $("[name="+field+"]", this.element).val(IDEAS_CONFIG.defaults[field]);
+        }
     },
 
     /**
@@ -126,36 +132,16 @@ $.widget('ideas.entryform', {
     },
 
     /**
-     * Populate severity selection control.
-     */
-    _fillSeverities: function()
-    {
-        var that = this;
-        $.each(IDEAS_CONFIG.severities, function(_, severity)
-        {
-            var option = $('<option>')
-                .attr('value', severity)
-                .text(severity)
-                .appendTo(that._severity);
-        });
-    },
-
-    /**
      * Disable form controls
      */
     _disable: function() {
-        this._component.attr('disabled', 'disabled');
-        this._severity.attr('disabled', 'disabled');
-        this._controls.attr('readonly', 'readonly');
-        this._controls.not('.keep').attr('tabindex', 1);
+        this._controls.prop('disabled', true);
     },
     /**
      * Enable form controls
      */
     _enable: function() {
-        this._component.removeAttr('disabled');
-        this._severity.removeAttr('disabled');
-        this._controls.removeAttr('readonly');
+        this._controls.prop('disabled', false);
     },
 
     /**
@@ -284,7 +270,8 @@ $.widget('ideas.entryform', {
     _check_required: function(input)
     {
         var labelth = input.parents('tr').first().find('th');
-        if(labelth.hasClass('required') && ! input.val()) {
+        var value = input.val();
+        if(labelth.hasClass('required') && (!value || value == "---")) {
             var field = labelth.text().trim().slice(0, -1);
             this._progress.append(field + ' is required.<br/>');
             input.css('background', 'pink');
@@ -434,6 +421,7 @@ $.widget('ideas.entryform', {
         var url = this._clone.val();
         if(! url) return;
         event.preventDefault();
+        this._clone.css('background', null);
         this._disable();
         this._progress.text('Fetching...');
         this._rpc('SeeAlsoPlus', 'get',
@@ -454,6 +442,8 @@ $.widget('ideas.entryform', {
             'Unknown error';
         this._progress.append('Failed to fetch remote item: '
                 + msg + '<br/>');
+        this._clone.css('background', 'pink');
+        this._enable();
     },
 
     /**
@@ -497,6 +487,5 @@ $(document).ready(function()
 {
     ideasInitNew({
         component: IDEAS_CONFIG.default_component,
-        severity: IDEAS_CONFIG.default_severity,
     });
 });

@@ -38,11 +38,12 @@ sub page_before_template {
 
         $vars->{ideas_config} = encode_json({
             components => \@components,
-            severities => [
-                sort @{Bugzilla::Field::get_legal_field_values('bug_severity')}
-            ],
             default_component => $selectedcomponent,
-            default_severity => Bugzilla->params->{quickideas_default_severity},
+            defaults => {
+                bug_severity => Bugzilla->params->{defaultseverity},
+                rep_platform => Bugzilla->params->{defaultplatfirm},
+                op_sys => Bugzilla->params->{defaultopsys},
+                },
         });
         $vars->{extra_fields} = Bugzilla->params->{quickideas_extra_fields};
 
