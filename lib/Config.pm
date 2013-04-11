@@ -21,8 +21,8 @@ sub get_param_list {
         'SELECT CONCAT(P.name, \'::\', C.name) FROM components AS C '.
         'LEFT JOIN products P ON C.product_id = P.id '.
         'WHERE P.isactive = 1 ORDER BY P.name, C.name')};
-    my @legal_fields = qw(bug_severity rep_platform op_sys blocked dependson
-            estimated_time deadline bug_file_loc keywords cc);
+    my @legal_fields = qw(bug_severity priority rep_platform op_sys blocked
+             dependson estimated_time deadline bug_file_loc keywords cc);
     push @legal_fields, map {$_->name} grep($_->enter_bug, Bugzilla->active_custom_fields);
 
     return ({
