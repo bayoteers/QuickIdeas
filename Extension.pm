@@ -15,6 +15,7 @@ use base qw(Bugzilla::Extension);
 
 use Bugzilla;
 use Bugzilla::Constants;
+use Bugzilla::Error;
 
 use JSON;
 
@@ -25,6 +26,10 @@ sub page_before_template {
 
     if($params->{page_id} eq 'quickideas/enter.html') {
         Bugzilla->login(LOGIN_REQUIRED);
+        my $group = Bugzilla->params->{quickideas_group};
+        ThrowUserError('auth_failure', {group => $group, action => 'access'})
+            if ($group && !Bugzilla->user->in_group($group));
+
         my $vars = $params->{vars};
         my @components = _get_component_list();
         my $selectedcomponent = 0;
@@ -90,6 +95,8 @@ sub config_add_panels {
 
 sub bb_common_links {
     my ($self, $args) = @_;
+    my $group = Bugzilla->params->{quickideas_group};
+    return if ($group && !Bugzilla->user->in_group($group));
     $args->{links}->{QuickIdeas} = [
         {
             text => "Enter Ideas",
@@ -97,6 +104,16 @@ sub bb_common_links {
             priority => 1
         }
     ];
+}
+
+sub template_before_process {
+    my ($self, $args) = @_;
+    if ($args->{file} eq 'index.html.tmpl') {
+        my $user = Bugzilla->user;
+        my $group = Bugzilla->params->{quickideas_group};
+        $args->{vars}->{show_quickideas} =
+            $user->id && (!$group || $user->in_group($group)) ? 1 : 0;
+    }
 }
 
 __PACKAGE__->NAME;

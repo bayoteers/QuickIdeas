@@ -8,6 +8,7 @@
   # Contributor(s):
   #   David Wilson
   #%]
+[% IF show_quickideas %]
 <div style="display: none">
     <li id="idea_item">
         <a id="idea" href="page.cgi?id=quickideas/enter.html">
@@ -29,3 +30,4 @@
    var item = YAHOO.util.Dom.getFirstChild(list);
    YAHOO.util.Dom.insertBefore(idea, item);
 </script>
+[% END %]

@@ -13,6 +13,7 @@ use warnings;
 
 use Bugzilla::Config::Common;
 use Bugzilla::Field;
+use Bugzilla::Group;
 
 sub get_param_list {
     my ($class) = @_;
@@ -26,6 +27,11 @@ sub get_param_list {
     push @legal_fields, map {$_->name} grep($_->enter_bug, Bugzilla->active_custom_fields);
 
     return ({
+            name => 'quickideas_group',
+            type => 's',
+            choices => ['', sort map {$_->name } Bugzilla::Group->get_all()],
+            default => '',
+        }, {
             name => 'quickideas_default_component',
             type => 's',
             choices => \@legal_components,
