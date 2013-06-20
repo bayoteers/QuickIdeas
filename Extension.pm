@@ -106,6 +106,11 @@ sub bb_common_links {
     ];
 }
 
+sub bb_group_params {
+    my ($self, $args) = @_;
+    push(@{$args->{group_params}}, 'quickideas_group');
+}
+
 sub template_before_process {
     my ($self, $args) = @_;
     if ($args->{file} eq 'index.html.tmpl') {
