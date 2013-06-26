@@ -18,28 +18,32 @@ use Bugzilla::Group;
 sub get_param_list {
     my ($class) = @_;
 
-    my @legal_components = @{Bugzilla->dbh->selectcol_arrayref(
-        'SELECT CONCAT(P.name, \'::\', C.name) FROM components AS C '.
+    my @components = map {join("::", @$_)} @{
+        Bugzilla->dbh->selectall_arrayref(
+        'SELECT P.name, C.name FROM components AS C '.
         'LEFT JOIN products P ON C.product_id = P.id '.
         'WHERE P.isactive = 1 ORDER BY P.name, C.name')};
-    my @legal_fields = qw(bug_severity priority rep_platform op_sys blocked
+    my @groups = sort @{Bugzilla->dbh->selectcol_arrayref(
+            "SELECT name FROM groups")};
+    unshift @groups, '';
+    my @fields = qw(bug_severity priority rep_platform op_sys blocked
              dependson estimated_time deadline bug_file_loc keywords cc);
-    push @legal_fields, map {$_->name} grep($_->enter_bug, Bugzilla->active_custom_fields);
+    push @fields, map {$_->name} grep($_->enter_bug, Bugzilla->active_custom_fields);
 
     return ({
             name => 'quickideas_group',
             type => 's',
-            choices => ['', sort map {$_->name } Bugzilla::Group->get_all()],
+            choices => \@groups,
             default => '',
         }, {
             name => 'quickideas_default_component',
             type => 's',
-            choices => \@legal_components,
-            default => $legal_components[0],
+            choices => \@components,
+            default => $components[0],
         }, {
             name => 'quickideas_extra_fields',
             type => 'm',
-            choices => \@legal_fields,
+            choices => \@fields,
             default => [],
         }, {
             name => 'quickideas_enable_clone',
