@@ -25,6 +25,7 @@ sub page_before_template {
     my ($self, $params) = @_;
 
     if($params->{page_id} eq 'quickideas/enter.html') {
+        ThrowCodeError('quickideas_requires_bb') unless _bb_available();
         Bugzilla->login(LOGIN_REQUIRED);
         my $group = Bugzilla->params->{quickideas_group};
         ThrowUserError('auth_failure', {group => $group, action => 'access'})
@@ -57,11 +58,6 @@ sub page_before_template {
             no warnings;
             require Bugzilla::Extension::SeeAlsoPlus::WebService;
         };
-
-        $vars->{bb_available} = eval {
-            no warnings;
-            require Bugzilla::Extension::BayotBase::Config;
-        } || 0;
     }
 }
 
@@ -111,14 +107,24 @@ sub bb_group_params {
     push(@{$args->{group_params}}, 'quickideas_group');
 }
 
+sub install_before_final_checks {
+    ThrowCodeError('quickideas_requires_bb') unless _bb_available();
+}
+
 sub template_before_process {
     my ($self, $args) = @_;
     if ($args->{file} eq 'index.html.tmpl') {
         my $user = Bugzilla->user;
         my $group = Bugzilla->params->{quickideas_group};
         $args->{vars}->{show_quickideas} =
-            $user->id && (!$group || $user->in_group($group)) ? 1 : 0;
+            _bb_available() && $user->id &&
+            ($group && $user->in_group($group)) ?
+                1 : 0;
     }
+}
+
+sub _bb_available {
+    return eval { require Bugzilla::Extension::BayotBase::Config };
 }
 
 __PACKAGE__->NAME;

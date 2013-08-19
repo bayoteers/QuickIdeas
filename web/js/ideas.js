@@ -147,9 +147,9 @@ $.widget('ideas.entryform', {
     /**
      * On failed save, update the progress meter.
      */
-    _onSaveFail: function(response)
+    _onSaveFail: function(error)
     {
-        var msg = response.error.message ? response.error.message :
+        var msg = error.message ? error.message :
             'Unknown error';
         this._progress.text('Failed: ' + msg);
         this._enable();
@@ -161,10 +161,10 @@ $.widget('ideas.entryform', {
      * the progress indicator to link to the bug. If the resave flag is set,
      * enqueue a new RPC.
      */
-    _onSaveDone: function(response)
+    _onSaveDone: function(result)
     {
 
-        this._bugId = response.result.id;
+        this._bugId = result.id;
         var a = $('<a target="_new">').attr({
             href: 'show_bug.cgi?id=' + this._bugId
         });
@@ -187,7 +187,7 @@ $.widget('ideas.entryform', {
     /**
      * Displays error message if setting the 'see also' field fails
      */
-    _updateSeeAlsoFail: function(response)
+    _updateSeeAlsoFail: function(error)
     {
         this._progress.append('Failed to add see also URL ' + cloneOf + '<br/>');
     },
@@ -352,16 +352,9 @@ $.widget('ideas.entryform', {
      */
     _rpc: function(namespace, method, params, onSuccess, onError)
     {
-        $.jsonRPC.setup({
-            endPoint: 'jsonrpc.cgi',
-            namespace: namespace,
-        });
-        $.jsonRPC.request(method, {
-            params: [params],
-            success: onSuccess,
-            error: onError,
-        });
-
+        var rpc = new Rpc(namespace, method, params);
+        rpc.done(onSuccess);
+        rpc.fail(onError);
     },
 
     /**
@@ -436,9 +429,9 @@ $.widget('ideas.entryform', {
     /**
      * Display error message if fetching remote bug failed
      */
-    _onCloneFail: function(response)
+    _onCloneFail: function(error)
     {
-        var msg = response.error.message ? response.error.message :
+        var msg = error.message ? error.message :
             'Unknown error';
         this._progress.append('Failed to fetch remote item: '
                 + msg + '<br/>');
@@ -449,9 +442,8 @@ $.widget('ideas.entryform', {
     /**
      * Fills the entry form with remote bug information
      */
-    _fillIdeaEntry: function(response)
+    _fillIdeaEntry: function(result)
     {
-        var result = response.result;
         this._progress.text('');
         this._cloneUrl = result.url;
         this._summary.val(result.summary);

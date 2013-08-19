@@ -14,25 +14,11 @@
 
 [% USE Bugzilla %]
 
-[% IF bb_available %]
-    [% javascript_urls = [
-        "extensions/QuickIdeas/web/js/ideas.js",
-        "js/util.js", "js/field.js",
-    ] %]
-[% ELSE %]
-    [% javascript_urls = [
-        "extensions/QuickIdeas/web/js/jquery-1.8.2.min.js"
-        "extensions/QuickIdeas/web/js/jquery-ui-1.9.1.custom.min.js"
-        "extensions/QuickIdeas/web/js/jquery.jsonrpc.js",
-        "extensions/QuickIdeas/web/js/ideas.js",
-        "js/util.js", "js/field.js",
-    ] %]
-[% END %]
-
-[% yui = ['autocomplete', 'calendar'] %]
-
 [% PROCESS global/header.html.tmpl
     title = 'Quickly enter ideas'
+    javascript_urls = [
+        "extensions/QuickIdeas/web/js/ideas.js",
+    ],
 %]
 
 <script>
@@ -106,10 +92,6 @@ YAHOO.bugzilla.keyword_array = [
   [% CASE %]
     <input type="text" name="[% field.name FILTER html %]"
              tabindex="2"/>
-[% END %]
-[% IF field.name == 'keywords' || field.name == 'cc' %]
-      <div class="[% field.name %]_autocomplete"></div>
-    </div>
 [% END %]
     <input class="keep" type="checkbox" tabindex="0"
             title="Preserve this field value for new ideas"

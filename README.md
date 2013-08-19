@@ -10,6 +10,9 @@ entering your next idea.
 Installation
 ------------
 
+This extension requires the [BayotBase](https://github.com/bayoteers/BayotBase)
+extension, so install that first.
+
 This extension uses JSON RPC interface to interact with the bugzilla, so make
 sure you have the required modules installed for Bugzilla. (They are required
 by this extension so checksetup.pl will complain if you don't have them)
@@ -31,30 +34,12 @@ Follow the normal extension installation process and
     Administrationn > Parameters > Bug Fields
 
 
-Now you should see the big "Ener Ideas" link at the Bugzilla home page. And if
-you have BayotBase extension installed, the "Enter Ideas" link will be available
-at the top link row on every Bugzilla page.
+Now you should see the big "Ener Ideas" link at the Bugzilla home page and the
+"Enter Ideas" link will be available at the top link row on every Bugzilla page.
 
 
 Notes
 -----
 
-This extension ships with the required jQuery Javascript libraries so it can be
-installed without [BayotBase][bb] extension, but you might be missing some
-features in that case.
-
 The "Clone" feature for cloning bugs from external sources requires that the
-[SeeAlsoPlus][sap] extension is installed
-
-
-[bb]: https://github.com/bayoteers/BayotBase
-[sap]: https://github.com/bayoteers/SeeAlsoPlus
-
-
-Included Libraries
-------------------
-
-*   [jQuery](http://jquery.com/)
-*   [jQuery UI](http://jqueryui.com/)
-*   [jQuery JSON RPC](https://github.com/datagraph/jquery-jsonrpc)
-
+[SeeAlsoPlus](https://github.com/bayoteers/SeeAlsoPlus) extension is installed
