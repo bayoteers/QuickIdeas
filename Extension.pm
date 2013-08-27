@@ -18,6 +18,8 @@ use Bugzilla::Constants;
 use Bugzilla::Error;
 
 use JSON;
+use List::MoreUtils qw(uniq);
+
 
 our $VERSION = '0.01';
 
@@ -32,26 +34,26 @@ sub page_before_template {
             if ($group && !Bugzilla->user->in_group($group));
 
         my $vars = $params->{vars};
-        my @components = _get_component_list();
-        my $selectedcomponent = 0;
-        for my $component (@components) {
-            last if (Bugzilla->params->{quickideas_default_component} eq
-                $component->{product}.'::'.$component->{name});
-            $selectedcomponent += 1;
-        }
-        # Select the first if match not found
-        $selectedcomponent = 0 if ($selectedcomponent == @components);
+
+        my ($product, $component) = split(/::/,
+                Bugzilla->params->{quickideas_default_component});
+
+        my @fields = qw(product component summary comment);
+        push(@fields, 'version') unless Bugzilla->params->{quickideas_default_version};
+        push(@fields, 'platform') unless Bugzilla->params->{defaultplatform};
+        push(@fields, 'op_sys') unless Bugzilla->params->{defaultopsys};
+        my @mandatory_cf = map {$_->name} grep {$_->is_mandatory}
+                Bugzilla->active_custom_fields;
+        push(@fields, @mandatory_cf);
+        push(@fields, @{Bugzilla->params->{quickideas_extra_fields}});
+        @fields = uniq @fields;
 
         $vars->{ideas_config} = encode_json({
-            components => \@components,
-            default_component => $selectedcomponent,
-            defaults => {
-                bug_severity => Bugzilla->params->{defaultseverity},
-                rep_platform => Bugzilla->params->{defaultplatfirm},
-                op_sys => Bugzilla->params->{defaultopsys},
-                },
+            product => $product,
+            component => $component,
+            version => Bugzilla->params->{quickideas_default_version},
+            fields => \@fields,
         });
-        $vars->{extra_fields} = Bugzilla->params->{quickideas_extra_fields};
 
         $vars->{enable_clone} = Bugzilla->params->{quickideas_enable_clone}
         && eval {

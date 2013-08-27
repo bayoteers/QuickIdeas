@@ -12,8 +12,8 @@ use strict;
 use warnings;
 
 use Bugzilla::Config::Common;
-use Bugzilla::Field;
-use Bugzilla::Group;
+use Bugzilla::Util qw(clean_text trim);
+use Bugzilla::Version;
 
 sub get_param_list {
     my ($class) = @_;
@@ -41,6 +41,11 @@ sub get_param_list {
             choices => \@components,
             default => $components[0],
         }, {
+            name => 'quickideas_default_version',
+            type => 't',
+            default => Bugzilla::Version::DEFAULT_VERSION,
+            checker => \&_check_version
+        }, {
             name => 'quickideas_extra_fields',
             type => 'm',
             choices => \@fields,
@@ -51,6 +56,24 @@ sub get_param_list {
             default => 0,
         },
     );
+}
+
+sub _check_version {
+    my $value = shift;
+    return "" unless $value;
+    my $version = Bugzilla::Version->match({value=>$value})->[0];
+    return "Unknown version '$value'" unless defined $version;
+    my $dbh = Bugzilla->dbh;
+    my $products = $dbh->selectcol_arrayref(
+        "SELECT name FROM products
+                LEFT JOIN versions ON versions.product_id = products.id
+                                  AND versions.value = ?
+          WHERE versions.value IS NULL", undef, $version->name);
+    if (scalar @$products) {
+        return "Version '$value' is not available in products "
+                .join(', ', @$products);
+    }
+    return "";
 }
 
 1;

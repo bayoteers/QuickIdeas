@@ -50,24 +50,25 @@ $.widget('ideas.entryform', {
      */
     _create: function()
     {
+        this._bug = new Bug(this.options.values, true);
         /** True if this has been or is being saved */
         this._saving = false;
         /** True when done event has been trigered. */
         this._done = false;
 
+        this._inputs = {};
+        this._keeps = {};
+
         this._render();
-        this._fillComponents();
-        this._setDefaults();
 
         var that = this;
-        this.element.find(':input').not('#clone').each(function() {
-            var input = $(this);
-            var name = input.attr('name');
-            if (name && that.options.values[name]) {
-                input.val(that.options.values[name]);
-                input.next('input.keep').prop('checked', true);
+        for (var name in this._inputs) {
+            if (this.options.values[name] != undefined) {
+                this._inputs[name].val(this.options.values[name]);
+                this._keeps[name].prop('checked', true);
             }
-        });
+        }
+        this._bug.visibilityUpdated($.proxy(this, "_onVisibilityUpdate"));
     },
 
     /**
@@ -78,57 +79,55 @@ $.widget('ideas.entryform', {
         this._clone = $('#clone', this.element);
         this._clone.keydown($.proxy(this, '_onCloneKeydown'));
 
-        this._component = $('.idea-component', this.element);
-        this._summary = $('[name=summary]', this.element);
-        this._description = $('[name=description]', this.element);
-
         this._progress = $('.progress', this.element);
+
+        var lastRow = this._progress.parents('tr').first();
+
+        for(var i=0; i < IDEAS_CONFIG.fields.length; i++){
+            var row = $("<tr>");
+            var field = this._bug.field(IDEAS_CONFIG.fields[i]);
+            if (!this._bug.isVisible(field)) row.hide();
+            var input = this._bug.createInput(field, false, true)
+                        .attr('tabindex', '2')
+            this._inputs[field.name] = input;
+            var th = $("<th>")
+                .addClass('field_label')
+                .append(this._bug.createLabel(field));
+            if (field.is_mandatory) th.addClass('required');
+            var td = $("<td>")
+                .addClass('field_value')
+                .append(input);
+            row.append(th, td);
+            var keep = $("<input>").attr({
+                        type: 'checkbox',
+                        tabindex: '0',
+                        title: 'Preserve this field value for new ideas',
+                    });
+            this._keeps[field.name] = keep;
+            row.append($("<td>").addClass("keep").append(keep));
+            lastRow.before(row);
+        }
+
         // To allow quick disabling.
         this._controls = $(':input', this.element);
-        this._controls.not('.keep').keydown(
-                $.proxy(this, '_onKeydown'));
+        this._fields = this._controls.not('#clone,.keep input,button');
 
-        this._controls.not('.keep').last().keydown(
-                $.proxy(this, '_onLastKeydown'));
+        // Bind key event handlers
+        this._fields.keydown($.proxy(this, '_onKeydown'));
+        this._fields.last().keydown($.proxy(this, '_onLastKeydown'));
 
-        // Keyword autocomlete init
-        $('[name=keywords]', this.element).each(function(index, input) {
-            var container = $(input).siblings(".keywords_autocomplete").get(0);
-            YAHOO.bugzilla.keywordAutocomplete.init(input, container);
-        });
-
-        // CC autocomplete
-        $('[name=cc]', this.element).each(function(index, input) {
-            var container = $(input).siblings(".cc_autocomplete").get(0);
-            YAHOO.bugzilla.userAutocomplete.init(input, container, true);
-        })
-        this._summary.focus();
+        this.element.find("button[name=save]").click($.proxy(this, '_save'));
+        this.element.find("input[name=summary]").focus();
     },
-
-    _setDefaults: function()
+    _onVisibilityUpdate: function(bug, changed, field, isVisible)
     {
-        for (var field in IDEAS_CONFIG.defaults) {
-            $("[name="+field+"]", this.element).val(IDEAS_CONFIG.defaults[field]);
+        var row = this.element.find('[name='+field+']')
+                .parents('tr').first();
+        if (isVisible) {
+            row.show();
+        } else {
+            row.hide();
         }
-    },
-
-    /**
-     * Populate components selection control.
-     */
-    _fillComponents: function()
-    {
-        var that = this;
-        var selected = this.options.values.component
-        $.each(IDEAS_CONFIG.components, function(index, component)
-        {
-            var option = $('<option>')
-                .attr('value', index)
-                .text(component.title)
-                .appendTo(that._component);
-            if (index == selected) {
-                option.prop('selected', true);
-            }
-        });
     },
 
     /**
@@ -147,7 +146,7 @@ $.widget('ideas.entryform', {
     /**
      * On failed save, update the progress meter.
      */
-    _onSaveFail: function(error)
+    _onSaveFail: function(bug, error)
     {
         var msg = error.message ? error.message :
             'Unknown error';
@@ -161,21 +160,19 @@ $.widget('ideas.entryform', {
      * the progress indicator to link to the bug. If the resave flag is set,
      * enqueue a new RPC.
      */
-    _onSaveDone: function(result)
+    _onSaveDone: function(bug)
     {
-
-        this._bugId = result.id;
         var a = $('<a target="_new">').attr({
-            href: 'show_bug.cgi?id=' + this._bugId
+            href: 'show_bug.cgi?id=' + this._bug.id
         });
 
-        a.text('Bug #' + this._bugId);
+        a.text('Bug #' + this._bug.id);
         this._progress.html(a);
 
         if (this._cloneUrl) {
             this._rpc('Bug', 'update_see_also',
                 {
-                    ids: [this._bugId],
+                    ids: [this._bug.id],
                     add: [this._cloneUrl],
                 },
                 undefined,
@@ -251,30 +248,31 @@ $.widget('ideas.entryform', {
     _validate: function()
     {
         var that = this;
-        var valid = true;
+        var allValid = true;
         this._progress.text('');
-        this.element.find(':input').each(function() {
+        this._fields.each(function() {
             var input = $(this);
             input.css("background", '');
             var name = input.attr('name');
-            if (valid) input.focus();
-            valid = that._check_required(input) && valid;
+            if (allValid) input.focus();
+            var inputValid = that._check_required(input);
             if (name && that['_validate_'+name] != undefined) {
-                valid = that['_validate_'+name](input) && valid;
+                inputValid = that['_validate_'+name](input) && inputValid;
             }
+            if (!inputValid) input.css('background', 'pink');
+            allValid = inputValid && allValid;
             return true;
         });
-        return valid;
+        return allValid;
     },
 
     _check_required: function(input)
     {
-        var labelth = input.parents('tr').first().find('th');
+        var name = input.attr('name');
         var value = input.val();
-        if(labelth.hasClass('required') && (!value || value == "---")) {
-            var field = labelth.text().trim().slice(0, -1);
-            this._progress.append(field + ' is required.<br/>');
-            input.css('background', 'pink');
+        var field = this._bug.field(name);
+        if(this._bug.isMandatory(field) && (!value || value == "---")) {
+            this._progress.append(field.display_name + ' is required.<br/>');
             return false;
         }
         return true;
@@ -282,12 +280,12 @@ $.widget('ideas.entryform', {
     _validate_summary: function(input)
     {
         if (input.val().length < 15) {
-            this._progress.append('Title too short.<br/>');
+            this._progress.append('Summary too short.<br/>');
             return false;
         }
         return true;
     },
-    _validate_description: function(input)
+    _validate_comment: function(input)
     {
         if(input.val().length < 30) {
             this._progress.append('Description too short.<br/>');
@@ -317,34 +315,33 @@ $.widget('ideas.entryform', {
      */
     _save: function()
     {
-        var ci = this._component.val();
-        var params = {
-            component: IDEAS_CONFIG.components[ci].name,
-            product: IDEAS_CONFIG.components[ci].product,
-            version: IDEAS_CONFIG.components[ci].version,
-        };
-        var keep = {
-            component: ci,
-        };
-        this.element.find(':input').each(function() {
-            var input = $(this);
-            var name = input.attr('name');
-            var value = input.val();
-            if (name && value) {
-                params[name] = value;
-                if (input.next('input.keep').prop('checked')) {
-                    keep[name] = value;
-                }
+        if(this._bug.id) {
+            return;
+        }
+        if(this._saving || !this._validate()) {
+            return;
+        }
+
+        var keep = {};
+        for (var name in this._inputs) {
+            if (this._keeps[name].prop('checked')) {
+                keep[name] = this._inputs[name].val()
             }
-        });
+        }
         this._values = keep;
 
         this._saving = true;
         this._progress.text('Saving...');
         this._disable();
-
-        this._rpc('Bug', 'create', params, $.proxy(this, "_onSaveDone"),
-                $.proxy(this, "_onSaveFail"));
+        this._bug.save()
+                .done($.proxy(this, "_onSaveDone"))
+                .fail($.proxy(this, "_onSaveFail"))
+        // Only fire done event once; this avoids repeatedly recreating new
+        // empty forms every time a server error occurs.
+        if (!this._done) {
+            this._done = true;
+            this._trigger("done", null, {values: this._values });
+        }
     },
 
     /**
@@ -364,8 +361,8 @@ $.widget('ideas.entryform', {
     _onKeydown: function(ev)
     {
         if(!(ev.keyCode == 75 && event.ctrlKey)) return;
-        var element = $(ev.target);
-        var keep = element.parents("td").first().find(".keep");
+        var name = $(ev.target).attr('name');
+        var keep = this._keeps[name];
         if (keep.prop('checked')) {
             keep.prop('checked', false);
         } else {
@@ -385,21 +382,7 @@ $.widget('ideas.entryform', {
         }
         event.preventDefault();
 
-        if(this._bugId) {
-            return;
-        }
-
-        if(! this._validate()) {
-            return;
-        } else if(! this._saving) {
-            this._save();
-            // Only fire done event once; this avoids repeatedly recreating new
-            // empty forms every time a server error occurs.
-            if (!this._done) {
-                this._done = true;
-                this._trigger("done", null, {values: this._values });
-            }
-        }
+        this._save();
     },
 
     /**
@@ -446,16 +429,16 @@ $.widget('ideas.entryform', {
     {
         this._progress.text('');
         this._cloneUrl = result.url;
-        this._summary.val(result.summary);
+        this._inputs.summary.val(result.summary).change();
         var head = ['---', result.description.author, 'on',
             result.description.date, '---'].join(' ');
         var description = 'From: ' + result.url + '\n' +
             head + '\n' +
             result.description.text + ' \n' +
             new Array(head.length + 1).join('-');
-        this._description.val(description);
+        this._inputs.comment.val(description).change();
         this._enable();
-        this._summary.focus();
+        this._inputs.summary.focus();
     },
 
 });
@@ -478,6 +461,9 @@ function ideasInitNew(values)
 $(document).ready(function()
 {
     ideasInitNew({
-        component: IDEAS_CONFIG.default_component,
+        product: IDEAS_CONFIG.product,
+        component: IDEAS_CONFIG.component,
+        version: IDEAS_CONFIG.version,
+        blocks: '',
     });
 });

@@ -23,10 +23,6 @@
 
 <script>
 var IDEAS_CONFIG = ([% ideas_config %]);
-YAHOO.bugzilla.keyword_array = [
-    [%- FOREACH keyword = all_keywords %]
-        [%-# %]"[% keyword.name FILTER js %]"
-        [%- "," IF NOT loop.last %][% END %]];
 </script>
 
 <div style="display: none"> <!-- templates -->
@@ -38,75 +34,12 @@ YAHOO.bugzilla.keyword_array = [
         </tr>
         [% END %]
         <tr>
-            <th class="field_label required">Component:</th>
-            <td>
-                <select class="idea-component" tabindex="2"></select>
-                <input class="keep" type="checkbox" checked="checked"
-                       tabindex="0"
-                       title="Preserve this field value for new ideas"/>
-            </td>
-        </tr>
-        <tr>
-            <th class="field_label required">Title:</th>
-            <td><input name="summary" tabindex="2"></td>
-        </tr>
-        <tr>
-            <th class="field_label required">Description:</th>
-            <td><textarea name="description" tabindex="2"></textarea></td>
-        </tr>
-    [%# Add mandatory custom fields %]
-    [% FOREACH field = Bugzilla.active_custom_fields %]
-        [% NEXT IF NOT field.is_mandatory OR extra_fields.grep(field.name).size %]
-        [% PROCESS field_row %]
-    [% END %]
-
-    [%# Add extra fields %]
-    [% FOREACH fname = extra_fields %]
-        [% field = bug_fields.$fname %]
-        [% PROCESS field_row %]
-    [% END %]
-        <tr>
             <td></td>
             <td><span class="progress"></span></td>
+            <td><button name="save" type="button">Submit</button></td>
         </tr>
     </table>
 </div>
-
-[% BLOCK field_row %]
-<tr>
-  [% PROCESS "bug/field-label.html.tmpl" %]
-  <td>
-[% IF field.name == 'keywords' || field.name == 'cc' %]<div>[% END %]
-[% SWITCH field.type %]
-  [% CASE constants.FIELD_TYPE_SINGLE_SELECT %]
-    <select name="[% field.name FILTER html %]"
-            tabindex="2">
-            [% PROCESS select_options %]
-    </select>
-
-  [% CASE constants.FIELD_TYPE_MULTI_SELECT %]
-    <select name="[% field.name FILTER html %]"
-            tabindex="2" multiple="multiple">
-            [% PROCESS select_options %]
-    </select>
-  [% CASE %]
-    <input type="text" name="[% field.name FILTER html %]"
-             tabindex="2"/>
-[% END %]
-    <input class="keep" type="checkbox" tabindex="0"
-            title="Preserve this field value for new ideas"
-            [% 'checked="checked"' IF field.name == 'blocked' %]/>
-
-  </td>
-</tr>
-[% END # field_row %]
-
-[% BLOCK select_options %]
-    [% FOREACH value = field.legal_values %]
-        [% SET tmp = value.name FILTER html %]
-        <option value="[% tmp %]">[% tmp %]</option>
-    [% END %]
-[% END # select_options %]
 
 <style>
     .idea {
@@ -131,15 +64,8 @@ YAHOO.bugzilla.keyword_array = [
         background: #efefef;
     }
 
-    .idea-component {
-        width: 73%;
-    }
-
-    #clone, [name=summary], [name=description] {
+    .idea [name=comment] {
         width: 100%;
-    }
-
-    [name=description] {
         height: 5em;
         resize: vertical;
     }
