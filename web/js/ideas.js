@@ -76,7 +76,7 @@ $.widget('ideas.entryform', {
      */
     _render: function()
     {
-        this._clone = $('#clone', this.element);
+        this._clone = $('input.clone', this.element);
         this._clone.keydown($.proxy(this, '_onCloneKeydown'));
 
         this._progress = $('.progress', this.element);
@@ -110,13 +110,17 @@ $.widget('ideas.entryform', {
 
         // To allow quick disabling.
         this._controls = $(':input', this.element);
-        this._fields = this._controls.not('#clone,.keep input,button');
+        this._fields = this._controls.not('.clone,.keep input,button');
 
         // Bind key event handlers
         this._fields.keydown($.proxy(this, '_onKeydown'));
         this._fields.last().keydown($.proxy(this, '_onLastKeydown'));
 
         this.element.find("button[name=save]").click($.proxy(this, '_save'));
+        this._fields.focus(function(ev) {
+            $(ev.target).addClass('ui-state-highlight')});
+        this._fields.blur(function(ev) {
+            $(ev.target).removeClass('ui-state-highlight')});
         this.element.find("input[name=summary]").focus();
     },
     _onVisibilityUpdate: function(bug, changed, field, isVisible)
