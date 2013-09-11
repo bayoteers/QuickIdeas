@@ -97,7 +97,7 @@ sub bb_common_links {
     return if ($group && !Bugzilla->user->in_group($group));
     $args->{links}->{QuickIdeas} = [
         {
-            text => "Enter Ideas",
+            text => "Quick Entry",
             href => "page.cgi?id=quickideas/enter.html",
             priority => 1
         }

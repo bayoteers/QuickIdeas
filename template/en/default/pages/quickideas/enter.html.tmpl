@@ -15,7 +15,7 @@
 [% USE Bugzilla %]
 
 [% PROCESS global/header.html.tmpl
-    title = 'Quickly enter ideas'
+    title = 'Quick ' _ terms.bug _' entry'
     javascript_urls = [
         "extensions/QuickIdeas/web/js/ideas.js",
     ],
@@ -30,7 +30,8 @@ var IDEAS_CONFIG = ([% ideas_config %]);
         [% IF enable_clone %]
         <tr>
             <th>Clone from:</th>
-            <td><input class="clone" tabindex="2"/></td>
+            <td><input class="clone" tabindex="2"
+                title="URL of the remote bug to clone from"/></td>
         </tr>
         [% END %]
         <tr>
@@ -87,7 +88,7 @@ var IDEAS_CONFIG = ([% ideas_config %]);
 
 
 
-<h2>Quickly enter ideas</h2>
+<h2>Quickly enter new [% terms.bug %]</h2>
 
 <div class="hint">
     <p><strong>How this page works</strong></p>
