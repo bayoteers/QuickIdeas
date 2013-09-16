@@ -93,8 +93,7 @@ sub config_add_panels {
 
 sub bb_common_links {
     my ($self, $args) = @_;
-    my $group = Bugzilla->params->{quickideas_group};
-    return if ($group && !Bugzilla->user->in_group($group));
+    return unless _user_can_access();
     $args->{links}->{QuickIdeas} = [
         {
             text => "Quick Entry",
@@ -116,17 +115,19 @@ sub install_before_final_checks {
 sub template_before_process {
     my ($self, $args) = @_;
     if ($args->{file} eq 'index.html.tmpl') {
-        my $user = Bugzilla->user;
-        my $group = Bugzilla->params->{quickideas_group};
         $args->{vars}->{show_quickideas} =
-            _bb_available() && $user->id &&
-            ($group && $user->in_group($group)) ?
-                1 : 0;
+            _bb_available() && _user_can_access() ? 1 : 0;
     }
 }
 
 sub _bb_available {
     return eval { require Bugzilla::Extension::BayotBase::Config };
+}
+
+sub _user_can_access {
+    my $user = Bugzilla->user;
+    my $group = Bugzilla->params->{quickideas_group};
+    return !$group || $user->in_group($group);
 }
 
 __PACKAGE__->NAME;
