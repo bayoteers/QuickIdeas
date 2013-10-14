@@ -455,7 +455,10 @@ function ideasInitNew(values)
     element = $('#idea_template').clone().removeAttr('id');
     element.prependTo('#ideas');
     var options = {
-        done: function(ev, data) {ideasInitNew(data.values)},
+        done: function(ev, data) {
+            ideasInitNew(data.values)
+            if (bvpInitTemplates != undefined) bvpInitTemplates();
+        },
         values: values,
     }
     element.entryform(options);
