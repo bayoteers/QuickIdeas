@@ -117,10 +117,6 @@ $.widget('ideas.entryform', {
         this._fields.last().keydown($.proxy(this, '_onLastKeydown'));
 
         this.element.find("button[name=save]").click($.proxy(this, '_save'));
-        this._fields.focus(function(ev) {
-            $(ev.target).addClass('ui-state-highlight')});
-        this._fields.blur(function(ev) {
-            $(ev.target).removeClass('ui-state-highlight')});
         this.element.find("input[name=summary]").focus();
     },
     _onVisibilityUpdate: function(bug, changed, field, isVisible)
@@ -464,9 +460,21 @@ function ideasInitNew(values)
     element.entryform(options);
 }
 
+function toggleHelp() {
+    $("#help").fadeToggle();
+    $(".help-hint").toggle();
+}
+
 
 $(document).ready(function()
 {
+    $(".help-hint").click(toggleHelp);
+
+    if ($.cookie('quick_entry_seen_help') != 1) {
+        // Help is initially hidden, we open it if user havent seen it already
+        toggleHelp();
+        $.cookie('quick_entry_seen_help', 1, {expires: 9999});
+    }
     ideasInitNew({
         product: IDEAS_CONFIG.product,
         component: IDEAS_CONFIG.component,

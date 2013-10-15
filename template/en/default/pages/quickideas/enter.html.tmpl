@@ -29,23 +29,26 @@ var IDEAS_CONFIG = ([% ideas_config %]);
     <table id="idea_template" class="idea">
         [% IF enable_clone %]
         <tr>
-            <th>Clone from:</th>
+            <th>Clone from</th>
             <td><input class="clone" tabindex="2"
                 title="URL of the remote bug to clone from"/></td>
         </tr>
         [% END %]
         <tr>
-            <td></td>
-            <td><span class="progress"></span></td>
             <td><button name="save" type="button">Submit</button></td>
+            <td><span class="progress"></span></td>
         </tr>
     </table>
 </div>
 
 <style>
+    #container {
+      width: 100ex;
+      max-width: 100%;
+    }
+
     .idea {
-        width: 50%;
-        padding: 1em;
+        width: 100%;
         background: #efffef;
         margin-bottom: 1em;
     }
@@ -65,8 +68,12 @@ var IDEAS_CONFIG = ([% ideas_config %]);
     }
     .idea [name=comment] {
         width: 100%;
-        height: 5em;
+        height: 20em;
         resize: vertical;
+    }
+    .idea .field_value {
+        width: 100%;
+        min-width: 0px;
     }
     .idea .keep {
         vertical-align: top;
@@ -78,21 +85,24 @@ var IDEAS_CONFIG = ([% ideas_config %]);
         width: 10%;
     }
 
-    .hint {
+    .help-hint {
+      cursor: pointer;
+      float: right;
+      font-weight: bold;
+    }
+    #help {
         background: #efefef;
-        width: 45%;
-        padding: 1em;
-        float: right;
+        display: none;
     }
 </style>
 
 
-
-<h2>Quickly enter new [% terms.bug %]</h2>
-
-<div class="hint">
-    <p><strong>How this page works</strong></p>
-
+<div id="container">
+  <span class="help-hint">[ How this page works? ]</span>
+  <span class="help-hint" style="display: none;"
+    >[ Thank you, I know how this works ]</span>
+  <h2>Quickly enter new [% terms.bugs %]</h2>
+  <div id="help">
     <p>
     <a href="enter_bug.cgi">'Enter [% terms.bug %]'</a> form allows tweaking
     every detail awailable, but it has it's drawbacks regarding speed. You on
@@ -102,34 +112,34 @@ var IDEAS_CONFIG = ([% ideas_config %]);
     </p>
 
     <ol>
-        <li>
-            <p>Select a component, or keep the default if you don't know where
-            to send your idea.</p>
-        </li>
+      <li>
+        <p>Select a component, or keep the default if you don't know where
+        to send your idea.</p>
+      </li>
 
-        <li>
-            <p>Type a title then hit tab. The keyboard focus is already in this
-            field when the page loads.</p>
-        </li>
+      <li>
+        <p>Type a title then hit tab. The keyboard focus is already in this
+        field when the page loads.</p>
+      </li>
 
-        <li>
-            <p>Type a description then hit tab.</p>
-        </li>
+      <li>
+        <p>Type a description then hit tab.</p>
+      </li>
 
-        [% IF extra_fields.size %]
-        <li>
-            <p>If you have any other details, fill them in, or just skip the
-            rest of the fields with tab.</p>
-        </li>
-        [% END %]
+      [% IF extra_fields.size %]
+      <li>
+        <p>If you have any other details, fill them in, or just skip the
+        rest of the fields with tab.</p>
+      </li>
+      [% END %]
 
-        <li>
-            <p><strong>Success!</strong> After hitting tab in the last field
-            your idea is merrily saving itself in the background. See step 2,
-            it's already possible to enter your next idea. Have a jolly day.
-            &#9786;
-            </p>
-        </li>
+      <li>
+        <p><strong>Success!</strong> After hitting tab in the last field
+        your idea is merrily saving itself in the background. See step 2,
+        it's already possible to enter your next idea. Have a jolly day.
+        &#9786;
+        </p>
+      </li>
     </ol>
 
     <p>Tip: use the tab key gratuitously!</p>
@@ -142,11 +152,11 @@ var IDEAS_CONFIG = ([% ideas_config %]);
     ideas I'm about to enter". If you check the box, the value of that field
     will be preserved when clearing the form for your next idea. Keyboard
     shortcut CTRL-K allows you to quickly toggle the checkbox.</p>
-</div>
+  </div>
 
-<div id="ideas">
+  <div id="ideas">
+  </div>
 </div>
-
 <p style="clear: both; padding-top: 2em;">
 </p>
 
