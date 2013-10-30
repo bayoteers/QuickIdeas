@@ -18,17 +18,20 @@ use Bugzilla::Version;
 sub get_param_list {
     my ($class) = @_;
 
+    my $dbh = Bugzilla->dbh;
+
     my @components = map {join("::", @$_)} @{
-        Bugzilla->dbh->selectall_arrayref(
+        $dbh->selectall_arrayref(
         'SELECT P.name, C.name FROM components AS C '.
         'LEFT JOIN products P ON C.product_id = P.id '.
         'WHERE P.isactive = 1 ORDER BY P.name, C.name')};
-    my @groups = sort @{Bugzilla->dbh->selectcol_arrayref(
-            "SELECT name FROM groups")};
+    my @groups = sort @{$dbh->selectcol_arrayref("SELECT name FROM groups")};
     unshift @groups, '';
+
     my @fields = qw(bug_severity priority rep_platform op_sys blocked
              dependson estimated_time deadline bug_file_loc keywords cc);
-    push @fields, map {$_->name} grep($_->enter_bug, Bugzilla->active_custom_fields);
+    push @fields, @{$dbh->selectcol_arrayref("SELECT name FROM fielddefs ".
+        "WHERE custom = 1 AND obsolete = 0 AND enter_bug = 1")};
 
     return ({
             name => 'quickideas_group',
