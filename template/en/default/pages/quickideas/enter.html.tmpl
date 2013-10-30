@@ -22,7 +22,7 @@
 %]
 
 <script>
-var IDEAS_CONFIG = ([% ideas_config %]);
+var IDEAS_CONFIG = ([% ideas_config FILTER none %]);
 </script>
 
 <div style="display: none"> <!-- templates -->
@@ -31,7 +31,7 @@ var IDEAS_CONFIG = ([% ideas_config %]);
         <tr>
             <th>Clone from</th>
             <td><input class="clone" tabindex="2"
-                title="URL of the remote bug to clone from"/></td>
+                title="URL of the remote [% terms.bug %] to clone from"/></td>
         </tr>
         [% END %]
         <tr>
