@@ -69,6 +69,7 @@ $.widget('ideas.entryform', {
             }
         }
         this._bug.visibilityUpdated($.proxy(this, "_onVisibilityUpdate"));
+        this._trigger("ready", null);
     },
 
     /**
