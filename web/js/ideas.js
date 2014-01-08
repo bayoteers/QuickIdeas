@@ -102,7 +102,7 @@ $.widget('ideas.entryform', {
             var keep = $("<input>").attr({
                         type: 'checkbox',
                         tabindex: '0',
-                        title: 'Preserve this field value for new ideas',
+                        title: 'Preserve this field value for new ideas'
                     });
             this._keeps[field.name] = keep;
             row.append($("<td>").addClass("keep").append(keep));
@@ -174,7 +174,7 @@ $.widget('ideas.entryform', {
             this._rpc('Bug', 'update_see_also',
                 {
                     ids: [this._bug.id],
-                    add: [this._cloneUrl],
+                    add: [this._cloneUrl]
                 },
                 undefined,
                 $.proxy(this, '_updateSeeAlsoFail')
@@ -403,7 +403,7 @@ $.widget('ideas.entryform', {
         this._progress.text('Fetching...');
         this._rpc('SeeAlsoPlus', 'get',
                 {
-                    url: url, no_cache: 1,
+                    url: url, no_cache: 1
                 },
                 $.proxy(this, '_fillIdeaEntry'),
                 $.proxy(this, '_onCloneFail')
@@ -440,8 +440,7 @@ $.widget('ideas.entryform', {
         this._inputs.comment.val(description).change();
         this._enable();
         this._inputs.summary.focus();
-    },
-
+    }
 });
 
 /**
@@ -456,7 +455,7 @@ function ideasInitNew(values)
             ideasInitNew(data.values)
             if (bvpInitTemplates != undefined) bvpInitTemplates();
         },
-        values: values,
+        values: values
     }
     element.entryform(options);
 }
@@ -480,6 +479,6 @@ $(document).ready(function()
         product: IDEAS_CONFIG.product,
         component: IDEAS_CONFIG.component,
         version: IDEAS_CONFIG.version,
-        blocks: '',
+        blocks: ''
     });
 });
