@@ -431,12 +431,11 @@ $.widget('ideas.entryform', {
         this._progress.text('');
         this._cloneUrl = result.url;
         this._inputs.summary.val(result.summary).change();
-        var head = ['---', result.description.author, 'on',
-            result.description.date, '---'].join(' ');
+        var separator = new Array(60).join('-') + '\n';
         var description = 'From: ' + result.url + '\n' +
-            head + '\n' +
-            result.description.text + ' \n' +
-            new Array(head.length + 1).join('-');
+            separator +
+            result.description + '\n' +
+            separator;
         this._inputs.comment.val(description).change();
         this._enable();
         this._inputs.summary.focus();
