@@ -28,10 +28,14 @@ sub page_before_template {
 
     if($params->{page_id} eq 'quickideas/enter.html') {
         ThrowCodeError('quickideas_requires_bb') unless _bb_available();
-        Bugzilla->login(LOGIN_REQUIRED);
+        my $user = Bugzilla->login(LOGIN_REQUIRED);
+
         my $group = Bugzilla->params->{quickideas_group};
         ThrowUserError('auth_failure', {group => $group, action => 'access'})
-            if ($group && !Bugzilla->user->in_group($group));
+            if ($group && !$user->in_group($group));
+
+        my @enterable_products = @{$user->get_enterable_products};
+        ThrowUserError('no_products') unless scalar(@enterable_products);
 
         my $vars = $params->{vars};
 
